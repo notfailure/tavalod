@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The jooje Quest</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #2d4c1e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated; 
+            display: block;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* MAIN MENU OVERLAY */
+        #main-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
+            color: #fff;
+            text-align: center;
+        }
+
+        #main-menu h1 {
+            color: #ffd700;
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 4px 4px #d35400;
+        }
+
+        .guide-text {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #ccc;
+            max-width: 80%;
+        }
+
+        .start-btn {
+            background: #2ecc71;
+            border: 4px solid #fff;
+            color: #fff;
+            padding: 15px 40px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .start-btn:active { transform: scale(0.95); }
+
+        /* VIRTUAL JOYSTICK */
+        #joystick-zone {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 140px;
+            height: 140px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: none; 
+            pointer-events: auto;
+            backdrop-filter: blur(2px);
+            z-index: 20;
+        }
+        
+        #joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* MEMORY BUTTON */
+        #memory-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #00bfff;
+            border: 4px solid #fff;
+            color: white;
+            padding: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            pointer-events: auto;
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 20px #00bfff;
+            z-index: 50;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* MODALS */
+        .modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            pointer-events: auto;
+            color: #fff;
+            text-align: center;
+        }
+
+        .modal-box {
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            max-width: 80%;
+            border: 4px solid #000;
+            position: relative;
+            z-index: 101;
+        }
+
+        h2 { margin-top: 0; font-size: 18px; line-height: 1.5; color: #d35400; }
+        
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            border: 2px solid #000;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            background: #2ecc71;
+            border: 2px solid #000;
+            color: #fff;
+            padding: 10px 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-right: 10px;
+            display: inline-block;
+        }
+
+        .media-content {
+            max-width: 100%;
+            max-height: 50vh;
+            margin-top: 15px;
+            border: 2px solid #000;
+            display: block;
+        }
+
+        #feedback { color: red; font-size: 12px; margin-top: 10px; display: none; }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="480"></canvas>
+
+    <!-- MAIN MENU -->
+    <div id="main-menu">
+        <h1>jooje QUEST</h1>
+        <div class="guide-text">
+            <p>Help the curly boy find the Golden Chick!</p>
+            <br>
+            <p>💻 <strong>PC:</strong> Use Arrow Keys to move.</p>
+            <p>📱 <strong>Phone:</strong> Use Joystick.</p>
+            <br>
+            <p>Answer questions to unlock memories.</p>
+        </div>
+        <button class="start-btn" onclick="startGame()">START</button>
+    </div>
+
+    <div id="ui-layer">
+        <div id="joystick-zone">
+            <div id="joystick-knob"></div>
+        </div>
+        <button id="memory-btn" onclick="openMemory()">ino bbinnnn</button>
+    </div>
+
+    <!-- 1. Question Modal -->
+    <div id="q-modal" class="modal">
+        <div class="modal-box">
+            <h2 id="q-text">Question...</h2>
+            <input type="text" id="q-input" placeholder="Type Answer">
+            <br>
+            <button class="btn" onclick="checkAnswer()">UNLOCK</button>
+            <div id="feedback">Wrong!</div>
+        </div>
+    </div>
+
+    <!-- 2. Memory Modal -->
+    <div id="m-modal" class="modal">
+        <div class="modal-box">
+            <h2>yadete injaro ?</h2>
+            <div id="m-content"></div>
+            <p id="m-caption" style="font-size: 12px; margin-top:10px;"></p>
+            <button class="btn" onclick="closeMemory()">CONTINUE</button>
+        </div>
+    </div>
+
+    <!-- 3. Win Modal -->
+    <div id="win-modal" class="modal">
+        <div class="modal-box">
+            <h1 style="color:#d35400">tavalodet mobarakkkkkkkkkkkkkkkkk!</h1>
+            <p>jooje tala peyda shd!</p>
+            <!-- Two Buttons -->
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="location.reload()">REPLAY</button>
+                <button class="btn" onclick="openExternalSite()">CLICK FOR jayeze</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURATION ---
+    const TILE_SIZE = 40; 
+    const MAP_WIDTH = 50;
+    const MAP_HEIGHT = 12; 
+    const ROAD_Y = 6; 
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // --- GAME DATA ---
+    const C_GRASS = '#2d4c1e'; 
+    const C_GRASS_DARK = '#1f3615';
+    const C_ROAD = '#5d4037'; 
+    const C_ROAD_EDGE = '#3e2723';
+    const C_SKIN = '#ffcc99';
+    const C_HAIR = '#4a3b2a';
+    const C_GOLD = '#ffd700';
+    const C_WATER = '#4fc3f7';
+
+    const hero = {
+        x: 2 * TILE_SIZE,
+        y: ROAD_Y * TILE_SIZE,
+        width: TILE_SIZE,
+        height: TILE_SIZE,
+        speed: 3
+    };
+
+    const camera = { x: 0, y: 0 };
+
+    // FIREWORKS SYSTEM
+    let rockets = [];
+    let particles = [];
+    const fwColors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f', '#fff'];
+
+    // Image Assets Container
+    const assets = {};
+
+    function loadAssets() {
+        const files = [
+            'obs_dolphin.png',
+            'obs_giraffe.png',
+            'obs_bridge.png',
+            'obs_frank.png',
+            'obs_princess.png'
+        ];
+        
+        files.forEach(f => {
+            const img = new Image();
+            img.src = f;
+            assets[f] = img;
+        });
+    }
+    loadAssets();
+
+    const OBSTACLES = [
+        { id: 1, type: 'dolphin', x: 8, y: ROAD_Y, active: true },
+        { id: 2, type: 'giraffe', x: 16, y: ROAD_Y, active: true },
+        { id: 3, type: 'bridge', x: 24, y: ROAD_Y, active: true },
+        { id: 4, type: 'frank', x: 32, y: ROAD_Y, active: true },
+        { id: 6, type: 'princess', x: 42, y: ROAD_Y, active: true }
+    ];
+
+    const MEMORIES = {
+        1: { type: 'image', file: 'pic1.jpg', caption: "Level 1 Unlocked!" },
+        2: { type: 'image', file: 'pic2.jpg', caption: "Level 2 Unlocked!" },
+        3: { type: 'video', file: 'video1.mp4', caption: "Level 3 Unlocked!" },
+        4: { type: 'image', file: 'pic3.jpg', caption: "Level 4 Unlocked!" }
+    };
+
+    const QUESTIONS = [
+        { id: 1, q: "koja ashena shdim?", a: ["call of duty", "codm", "کالاف", "کال اف دیوتی"] },
+        { id: 2, q: "Where was our first date?", a: ["airport", "فرودگاه", "mehrabad"] },
+        { id: 3, q: "az 1 ta 1000 chnd ta dooset daram?", a: ["kheyli", "1000", "10000"] },
+        { id: 4, q: "man toro chi seda miknm?", a: ["joje", "jooje", "جوجه"] }
+    ];
+
+    let currentObstacleId = null;
+    let isPaused = true;
+    let gameWon = false;
+    let fireworkTimer = 0;
+
+    // --- DRAWING FUNCTIONS ---
+    function drawPixelRect(x, y, w, h, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(Math.floor(x), Math.floor(y), w, h);
+    }
+
+    // Launch a rocket
+    function launchFirework() {
+        const x = Math.random() * canvas.width;
+        const targetY = Math.random() * (canvas.height / 2); // Explode in top half
+        rockets.push({
+            x: x,
+            y: canvas.height,
+            targetY: targetY,
+            speed: 4 + Math.random() * 2,
+            color: fwColors[Math.floor(Math.random() * fwColors.length)]
+        });
+    }
+
+    // Create explosion particles
+    function explode(x, y, color) {
+        for(let i=0; i<40; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 4 + 1;
+            particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                color: color,
+                alpha: 1.0
+            });
+        }
+    }
+
+    function updateAndDrawFireworks() {
+        // Launch new rockets randomly
+        fireworkTimer++;
+        if (fireworkTimer > 30) { // Every half second roughly
+            if(Math.random() > 0.5) launchFirework();
+            fireworkTimer = 0;
+        }
+
+        // Update Rockets
+        for (let i = rockets.length - 1; i >= 0; i--) {
+            let r = rockets[i];
+            r.y -= r.speed;
+            
+            // Draw Rocket Trail
+            drawPixelRect(r.x, r.y, 4, 8, r.color);
+
+            // Check if reached target
+            if (r.y <= r.targetY) {
+                explode(r.x, r.y, r.color);
+                rockets.splice(i, 1);
+            }
+        }
+
+        // Update Particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.15; // Gravity
+            p.alpha -= 0.015; // Fade out
+
+            if (p.alpha <= 0) {
+                particles.splice(i, 1);
+            } else {
+                ctx.globalAlpha = p.alpha;
+                drawPixelRect(p.x, p.y, 4, 4, p.color);
+                ctx.globalAlpha = 1.0;
+            }
+        }
+    }
+
+    function drawTile(x, y) {
+        const px = x * TILE_SIZE;
+        const py = y * TILE_SIZE;
+
+        // Bridge Logic: Water instead of Road
+        if (x >= 22 && x <= 27 && y === ROAD_Y) {
+             drawPixelRect(px, py, TILE_SIZE, TILE_SIZE, C_WATER);
+             if (x % 2 === 0) drawPixelRect(px+10, py+10, 20, 2, '#29b6f6');
+             return;
+        }
+
+        if (y === ROAD_Y) {
+            drawPixelRect(px, py, TILE_SIZE, TILE_SIZE, C_ROAD);
+            if ((x % 3) === 0) drawPixelRect(px + 15, py + 10, 10, 4, C_ROAD_EDGE);
+        } else {
+            const isDark = (x + y) % 2 === 0;
+            drawPixelRect(px, py, TILE_SIZE, TILE_SIZE, isDark ? C_GRASS : C_GRASS_DARK);
+            if ((x % 5 === 0) && (y % 3 === 0)) {
+                 drawPixelRect(px + 10, py + 10, 5, 5, '#1b5e20');
+            }
+        }
+    }
+
+    function drawHero(sx, sy) {
+        drawPixelRect(sx + 4, sy + 4, 24, 24, C_SKIN); 
+        drawPixelRect(sx + 2, sy + 2, 20, 8, C_HAIR); 
+        drawPixelRect(sx, sy + 6, 6, 10, C_HAIR); 
+        drawPixelRect(sx + 24, sy + 6, 6, 10, C_HAIR); 
+        drawPixelRect(sx + 10, sy + 14, 4, 4, '#000'); 
+        drawPixelRect(sx + 20, sy + 14, 4, 4, '#000'); 
+        drawPixelRect(sx + 6, sy + 28, 20, 12, '#e74c3c'); 
+    }
+
+    function drawObstacle(obs) {
+        const sx = obs.x * TILE_SIZE;
+        const sy = obs.y * TILE_SIZE;
+        const filename = 'obs_' + obs.type + '.png';
+        const img = assets[filename];
+
+        if (img && img.complete && img.naturalHeight !== 0) {
+            let w = obs.type === 'bridge' ? TILE_SIZE * 2 : TILE_SIZE * 1.5;
+            let h = obs.type === 'bridge' ? TILE_SIZE * 1.5 : TILE_SIZE * 1.5;
+            
+            let drawX = sx - (w - TILE_SIZE)/2;
+            let drawY = sy - h + TILE_SIZE; 
+
+            ctx.drawImage(img, drawX, drawY, w, h);
+
+            if (obs.type === 'bridge') {
+                ctx.fillStyle = "white";
+                ctx.font = "bold 16px Courier New";
+                ctx.textAlign = "center";
+                ctx.fillText("1200km", sx + TILE_SIZE, sy + 15);
+            }
+
+        } else {
+            // FALLBACK
+            if (obs.type === 'dolphin') drawPixelRect(sx+10, sy+10, 20, 20, C_WATER);
+            else if (obs.type === 'princess') drawPixelRect(sx+10, sy+10, 20, 20, C_GOLD);
+            else drawPixelRect(sx, sy, TILE_SIZE, TILE_SIZE, '#555');
+        }
+    }
+
+    // --- DRAW LOOP ---
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.save();
+        ctx.translate(-Math.floor(camera.x), 0);
+
+        const startCol = Math.floor(camera.x / TILE_SIZE);
+        const endCol = startCol + (canvas.width / TILE_SIZE) + 1;
+
+        for (let x = startCol; x <= endCol; x++) {
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                if (x >= 0 && x < MAP_WIDTH) {
+                    drawTile(x, y);
+                }
+            }
+        }
+
+        OBSTACLES.forEach(obs => {
+            const screenX = (obs.x * TILE_SIZE) - camera.x;
+            if (screenX > -TILE_SIZE * 2 && screenX < canvas.width) {
+                if (obs.active) drawObstacle(obs);
+            }
+        });
+
+        drawHero(hero.x, hero.y);
+
+        ctx.restore();
+
+        // Draw fireworks on top of everything (UI Layer logic)
+        if(gameWon) {
+            updateAndDrawFireworks();
+        }
+        
+        if(!isPaused || gameWon) {
+            requestAnimationFrame(draw);
+        }
+    }
+
+    function update() {
+        if (isPaused && !gameWon) return;
+
+        let dx = 0;
+        let dy = 0;
+
+        if (keys['ArrowUp']) dy = -hero.speed;
+        if (keys['ArrowDown']) dy = hero.speed;
+        if (keys['ArrowLeft']) dx = -hero.speed;
+        if (keys['ArrowRight']) dx = hero.speed;
+
+        if (joystick.active) {
+            dx = joystick.x * hero.speed;
+            dy = joystick.y * hero.speed;
+        }
+
+        let newX = hero.x + dx;
+        let newY = hero.y + dy;
+
+        if (newX < 0) newX = 0;
+        if (newX > (MAP_WIDTH * TILE_SIZE) - hero.width) newX = (MAP_WIDTH * TILE_SIZE) - hero.width;
+        if (newY < 0) newY = 0;
+        if (newY > canvas.height - hero.height) newY = canvas.height - hero.height;
+
+        const roadTop = (ROAD_Y * TILE_SIZE) - 10;
+        const roadBot = (ROAD_Y * TILE_SIZE) + 10;
+        
+        if (newY < roadTop || newY > roadBot) {
+            newY = hero.y;
+        }
+
+        hero.x = newX;
+        hero.y = newY;
+
+        let targetCamX = hero.x - canvas.width / 3;
+        if (targetCamX < 0) targetCamX = 0;
+        if (targetCamX > (MAP_WIDTH * TILE_SIZE) - canvas.width) targetCamX = (MAP_WIDTH * TILE_SIZE) - canvas.width;
+        
+        camera.x += (targetCamX - camera.x) * 0.2;
+
+        checkCollisions();
+    }
+
+    function checkCollisions() {
+        const heroGridX = Math.round(hero.x / TILE_SIZE);
+        const heroGridY = Math.round(hero.y / TILE_SIZE);
+
+        OBSTACLES.forEach(obs => {
+            if (!obs.active) return;
+
+            if (heroGridX === obs.x && heroGridY === obs.y) {
+                if (obs.type === 'princess') {
+                    isPaused = true;
+                    gameWon = true;
+                    setTimeout(() => {
+                        document.getElementById('win-modal').style.display = 'flex';
+                    }, 3000); 
+                } else {
+                    isPaused = true;
+                    currentObstacleId = obs.id;
+                    showQuestion(obs.id);
+                }
+            }
+        });
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        if(!isPaused || gameWon) {
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    function startGame() {
+        document.getElementById('main-menu').style.display = 'none';
+        isPaused = false;
+        gameWon = false;
+        gameLoop();
+    }
+
+    // --- NEW FUNCTION FOR EXTERNAL LINK ---
+    function openExternalSite() {
+        // REPLACE THIS URL WITH WHATEVER YOU WANT
+        window.open('gallery/bday.html', '_blank');
+    }
+
+    // --- INPUTS ---
+    const keys = {};
+    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    const joystickZone = document.getElementById('joystick-zone');
+    const joystickKnob = document.getElementById('joystick-knob');
+    const joystick = { active: false, x: 0, y: 0, originX: 0, originY: 0 };
+
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        joystickZone.style.display = 'block';
+    }
+
+    joystickZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = joystickZone.getBoundingClientRect();
+        joystick.active = true;
+        joystick.originX = rect.left + rect.width / 2;
+        joystick.originY = rect.top + rect.height / 2;
+        updateJoystick(touch.clientX, touch.clientY);
+    }, {passive: false});
+
+    joystickZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if(joystick.active) {
+            const touch = e.touches[0];
+            updateJoystick(touch.clientX, touch.clientY);
+        }
+    }, {passive: false});
+
+    joystickZone.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        joystick.active = false;
+        joystick.x = 0;
+        joystick.y = 0;
+        joystickKnob.style.transform = `translate(-50%, -50%)`;
+    });
+
+    function updateJoystick(clientX, clientY) {
+        const maxDist = 40; 
+        let dx = clientX - joystick.originX;
+        let dy = clientY - joystick.originY;
+        const distance = Math.sqrt(dx*dx + dy*dy);
+
+        if (distance > maxDist) {
+            const ratio = maxDist / distance;
+            dx *= ratio;
+            dy *= ratio;
+        }
+
+        joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+        joystick.x = dx / maxDist;
+        joystick.y = dy / maxDist;
+    }
+
+    // --- GAMEPLAY LOGIC ---
+    function showQuestion(id) {
+        const qData = QUESTIONS.find(q => q.id === id);
+        if (!qData) return;
+        document.getElementById('q-input').value = "";
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('q-modal').style.display = 'flex';
+        document.getElementById('q-input').focus();
+        document.getElementById('q-text').innerText = qData.q;
+    }
+
+    function checkAnswer() {
+        const qData = QUESTIONS.find(q => q.id === currentObstacleId);
+        const input = document.getElementById('q-input').value.toLowerCase().trim();
+        if (qData.a.some(ans => input.includes(ans))) {
+            document.getElementById('q-modal').style.display = 'none';
+            const obs = OBSTACLES.find(o => o.id === currentObstacleId);
+            obs.active = false;
+            document.getElementById('memory-btn').style.display = 'block';
+        } else {
+            document.getElementById('feedback').style.display = 'block';
+        }
+    }
+
+    function openMemory() {
+        const mData = MEMORIES[currentObstacleId];
+        const container = document.getElementById('m-content');
+        container.innerHTML = '';
+        if (mData.type === 'image') {
+            let img = document.createElement('img');
+            img.src = mData.file;
+            img.className = 'media-content';
+            container.appendChild(img);
+        } else {
+            let vid = document.createElement('video');
+            vid.src = mData.file;
+            vid.className = 'media-content';
+            vid.controls = true;
+            vid.autoplay = true;
+            container.appendChild(vid);
+        }
+        document.getElementById('m-caption').innerText = mData.caption;
+        document.getElementById('memory-btn').style.display = 'none';
+        document.getElementById('m-modal').style.display = 'flex';
+    }
+
+    function closeMemory() {
+        const vids = document.querySelectorAll('video');
+        vids.forEach(v => v.pause());
+        document.getElementById('m-modal').style.display = 'none';
+        isPaused = false;
+        gameLoop(); 
+    }
+
+    draw();
+
+</script>
+</body>
+</html>

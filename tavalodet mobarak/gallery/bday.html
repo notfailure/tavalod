@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #fcfbf9; --pink: #d63384; --purple: #862e9c;
+            --dark: #2c2c2c; --white: #fff; --shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Lato', sans-serif; background: var(--bg); color: var(--dark); overflow-x: hidden; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 400; }
+
+        /* INTRO OVERLAY */
+        #intro { position: fixed; inset: 0; background: #1a1a2e; z-index: 1000; display: flex; justify-content: center; align-items: center; transition: opacity 1s; }
+        canvas { position: absolute; inset: 0; z-index: 1; }
+        
+        /* BUTTON */
+        .start-btn { position: relative; z-index: 10; background: transparent; color: #fff; border: 1px solid #fff; padding: 12px 30px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
+        .start-btn:hover { background: #fff; color: var(--dark); }
+
+        /* POPUP MODAL (Fixed Positioning) */
+        .modal { position: absolute; z-index: 20; background: var(--white); padding: 40px; text-align: center; max-width: 400px; width: 90%; opacity: 0; pointer-events: none; transform: scale(0.8); transition: all 0.5s ease; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .modal.active { opacity: 1; transform: scale(1); pointer-events: all; }
+        .modal h2 { font-size: 2.5rem; color: var(--pink); margin-bottom: 10px; font-style: italic; }
+        .modal p { margin-bottom: 25px; color: #555; }
+        .enter-btn { background: var(--dark); color: #fff; padding: 10px 25px; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .enter-btn:hover { background: var(--pink); }
+
+        /* MAIN CONTENT */
+        #main { display: none; opacity: 0; transition: opacity 1.5s; padding-bottom: 50px; }
+        header { text-align: center; padding: 80px 20px; }
+        header h1 { font-size: 3.5rem; margin-bottom: 10px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+        /* MASONRY GALLERY */
+        .masonry { column-count: 3; column-gap: 20px; }
+        .item { break-inside: avoid; margin-bottom: 20px; background: var(--white); box-shadow: var(--shadow); transition: transform 0.3s; }
+        .item:hover { transform: translateY(-5px); }
+        .item img { width: 100%; display: block; }
+        .caption { padding: 10px; text-align: center; font-size: 0.9rem; font-style: italic; }
+
+        /* VIDEO GRID */
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 80px; }
+        .video-card { background: var(--white); padding: 10px; box-shadow: var(--shadow); }
+        .wrap { position: relative; padding-bottom: 56.25%; overflow: hidden; background: #000; }
+        .wrap video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .v-meta { padding: 15px; text-align: center; }
+        .v-meta h3 { margin-bottom: 5px; color: var(--purple); }
+
+        /* NOTE */
+        .note { background: linear-gradient(to bottom, #fff, #fff5f8); padding: 60px 20px; text-align: center; margin-top: 80px; }
+        .note p { font-family: 'Playfair Display'; font-size: 1.4rem; max-width: 700px; margin: 0 auto; }
+
+        /* MUSIC TOGGLE */
+        .music-btn { position: fixed; bottom: 20px; right: 20px; z-index: 100; background: var(--white); width: 40px; height: 40px; border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow); }
+
+        @media(max-width: 768px) { .masonry { column-count: 2; } header h1 { font-size: 2.5rem; } }
+        @media(max-width: 500px) { .masonry { column-count: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- Audio -->
+    <audio id="audio" loop><source src="Mohammad Alizade - Kheili Khosh Halam (320).mp3" type="audio/mpeg"></audio>
+
+    <!-- Intro Overlay -->
+    <div id="intro">
+        <canvas id="fireworks"></canvas>
+        
+        <button class="start-btn" id="startBtn">Open Gift</button>
+        
+        <div class="modal" id="modal">
+            <h2>tavalode babeeeeee!</h2>
+            <p>khatere haye ghashangemoono bbin.</p>
+            <button class="enter-btn" id="enterBtn">Enter Gallery</button>
+        </div>
+    </div>
+
+    <!-- Music Toggle -->
+    <div class="music-btn" id="musicBtn"><i class="fas fa-music"></i></div>
+
+    <!-- Main Content -->
+    <div id="main">
+        <header>
+            <h1>dokhtar khosgeleee</h1>
+            <p>20 salet shd oskol. bia inaro be onvan ax haye "before:" dashte bash</p>
+        </header>
+        <div class="container">
+            <div class="masonry">
+                <div class="item"><img src="IMG-20251126-WA0012.jpg"><div class="caption"></div></div>
+                <div class="item"><img src="IMG_20250908_175137_596.jpg"><div class="caption"></div></div>
+                <div class="item"><img src="IMG_20251213_222834.jpg"><div class="caption"></div></div>
+                <div class="item"><img src="IMG_20250908_174943_751.jpg"><div class="caption"></div></div>
+                <div class="item"><img src="IMG_20250923_095645.jpg"><div class="caption"></div></div>
+                <div class="item"><img src="IMG_20251226_011802.jpg"><div class="caption"></div></div>
+                <div class="item"><img src="IMG_20251226_012118.jpg"><div class="caption"></div></div>
+            </div>
+
+            <div class="video-grid">
+                <div class="video-card">
+                    <div class="wrap"><video controls><source src="VID_20251226_004134.mp4"></video></div>
+                    <div class="v-meta"><h3>bia, fek kn tavalode emsalete</h3></div>
+                </div>
+                <div class="video-card">
+                    <div class="wrap"><video controls><source src="VID_20231115_160244.mp4"></video></div>
+                    <div class="v-meta"><h3>haromzade baziato to 20 salegi beza knar (dorogh migm)!</h3></div>
+                </div>
+                <div class="video-card">
+                    <div class="wrap"><video controls><source src="VID-20251125-WA0002.mp4"></video></div>
+                    <div class="v-meta"><h3>khodayaaaa khnde hasho bbinnnn!</h3></div>
+                </div>
+
+            </div>
+
+            <div class="note">
+                <p>"doost daram sanie be saniamo ba to begzaroonam. khdaya mercy ke joje ro afaridi, maman babaye jooje mercy vase 20 sal va 9 mahe pish ke khakbarsari kardin v in joje oskolo be donya avordin. ba oomadanesh donya khoshgel tar shde
+                    adama khoshal tar shdn v hame chi rangi shde. alan ke 20 salet shde v rasman bozorg shdi, vaghteshe jeddi tar shi v be zendegi khodet sar v samoon bdi. az pasesh bar miay, didamesh ino toot, bahooshi, ba etemad be nafsi, khoshgeliiiiii
+                    (in rabti nadasht vli khastm bhsh eshare knm) v ghbln hm ba poshtkar boodi pas bazam mitooni bashi, behet etemad daram v motmaenam ke mitooni.
+                    kholase ke tang kn v bishtar talash kn, shld kn v az zendgi lezzat bebar. khyli cheshat naz an (inm rbti ndasht vli delam khast). taze daram sai miknm ziad las nznm bahat vli nmishe keeeeee az bas babe delamiiiii
+                    bishtar az hamishe havaseto bede be khdt v movazeb joje qshnge 20 salam bash!"</p>
+                <br><small style="text-transform:uppercase; letter-spacing:2px;">taghdim be dokhtar khoshgele</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- FIREWORKS ENGINE ---
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+        let w, h, particles = [], fireworks = [], animating = false;
+        
+        const resize = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
+        window.onresize = resize; resize();
+
+        const rnd = (a, b) => Math.random() * (b - a) + a;
+        const colors = ['#d63384', '#862e9c', '#f3d0e3', '#fff'];
+
+        class Particle {
+            constructor(x, y, c) {
+                this.x = x; this.y = y; this.c = c;
+                this.a = 1; 
+                this.v = { x: Math.cos(Math.random()*6.28)*rnd(1,4), y: Math.sin(Math.random()*6.28)*rnd(1,4) };
+            }
+            update() {
+                this.x += this.v.x; this.y += this.v.y; 
+                this.v.y += 0.05; 
+                this.a -= 0.015;
+            }
+            draw() {
+                ctx.globalAlpha = this.a; ctx.fillStyle = this.c;
+                ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, 7); ctx.fill();
+            }
+        }
+
+        class Firework {
+            constructor() {
+                this.x = w/2; this.y = h; 
+                this.tx = rnd(50, w-50); this.ty = rnd(50, h/2);
+                this.c = colors[Math.floor(rnd(0, 4))];
+                const a = Math.atan2(this.ty - this.y, this.tx - this.x);
+                this.v = { x: Math.cos(a)*8, y: Math.sin(a)*8 };
+            }
+            update() {
+                this.x += this.v.x; this.y += this.v.y;
+                if(Math.hypot(this.tx - this.x, this.ty - this.y) < 20) {
+                    for(let i=0; i<50; i++) particles.push(new Particle(this.x, this.y, this.c));
+                    return true;
+                }
+                return false;
+            }
+            draw() {
+                ctx.strokeStyle = this.c; ctx.beginPath();
+                ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.v.x*3, this.y - this.v.y*3);
+                ctx.stroke();
+            }
+        }
+
+        function loop() {
+            if(!animating) return;
+            requestAnimationFrame(loop);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0,0,w,h);
+            ctx.globalCompositeOperation = 'lighter';
+
+            if(rnd(0,1) < 0.05) fireworks.push(new Firework());
+
+            fireworks = fireworks.filter(f => { f.draw(); return !f.update(); });
+            particles = particles.filter(p => { p.draw(); p.update(); return p.a > 0; });
+        }
+
+        // --- INTERACTION ---
+        const audio = document.getElementById('audio');
+        const startBtn = document.getElementById('startBtn');
+        const modal = document.getElementById('modal');
+        const enterBtn = document.getElementById('enterBtn');
+        const intro = document.getElementById('intro');
+        const main = document.getElementById('main');
+        const musicBtn = document.getElementById('musicBtn');
+
+        startBtn.onclick = () => {
+            // Attempt to play audio, but don't crash if blocked
+            audio.play().catch(e => console.log("Audio blocked waiting for interaction"));
+
+            // Immediate visual feedback
+            startBtn.style.display = 'none';
+            modal.classList.add('active');
+            
+            // Start fireworks
+            animating = true; loop();
+        };
+
+        enterBtn.onclick = () => {
+            intro.style.opacity = '0';
+            setTimeout(() => {
+                intro.style.display = 'none';
+                main.style.display = 'block';
+                musicBtn.style.display = 'flex';
+                // Fade in main content
+                setTimeout(() => main.style.opacity = '1', 50);
+                animating = false; // Stop fireworks to save battery
+            }, 1000);
+        };
+
+        musicBtn.onclick = () => audio.paused ? audio.play() : audio.pause();
+    </script>
+</body>
+</html>
